@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
+import '../main.dart'
+    show PatternKind, PatternHeader, PatternButton,
+    validateEmail, validatePassword, validateRequired;
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+  final PatternKind pattern;
+  final VoidCallback onChangePattern;
+  const SignupScreen({
+    super.key,
+    required this.pattern,
+    required this.onChangePattern,
+  });
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  final _name  = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _name = TextEditingController();
   final _email = TextEditingController();
-  final _pass  = TextEditingController();
+  final _pass = TextEditingController();
 
   @override
   void dispose() {
@@ -20,63 +30,77 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
-  void _showMessage(String text) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Message'),
-        content: Text(text),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
-      ),
-    );
+  void _signUp() {
+    if (_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Signup OK (demo)')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final spacing = const SizedBox(height: 12);
+    final txt = Theme.of(context).textTheme;
+    final cs  = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign up')),
+      appBar: AppBar(
+        title: const Text('Sign up'),
+        actions: [
+          TextButton(
+            onPressed: widget.onChangePattern,
+            child: Text('Pattern: ${widget.pattern.name}',
+                style: TextStyle(color: cs.onSurfaceVariant)),
+          ),
+        ],
+        flexibleSpace: PatternHeader(pattern: widget.pattern),
+      ),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const FlutterLogo(size: 72),
-                const SizedBox(height: 16),
-
-                TextField(
-                  controller: _name,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(labelText: 'Full name'),
-                ),
-                spacing,
-                TextField(
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-                spacing,
-                TextField(
-                  controller: _pass,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Password'),
-                ),
-                const SizedBox(height: 20),
-
-                ElevatedButton(
-                  onPressed: () => _showMessage('Registration: need to implement'),
-                  child: const Text('Create account'),
-                ),
-                spacing,
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Back'),
-                ),
-              ],
+            child: Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Create account', style: txt.titleLarge, textAlign: TextAlign.center),
+                  const SizedBox(height: 24),
+                  TextFormField(
+                    controller: _name,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                    validator: validateRequired,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    validator: validateEmail,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _pass,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: 'Password'),
+                    validator: validatePassword,
+                  ),
+                  const SizedBox(height: 20),
+                  PatternButton.filled(
+                    pattern: widget.pattern,
+                    onPressed: _signUp,
+                    child: const Text('Create'),
+                  ),
+                  const SizedBox(height: 12),
+                  PatternButton.outline(
+                    pattern: widget.pattern,
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Back to sign in'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
